@@ -1,3 +1,4 @@
+import os
 import datetime
 
 from rest_helper import RestHelper
@@ -6,6 +7,7 @@ from rest_helper import RestHelper
 class Snow(object):
     def __init__(self):
         self.rest = RestHelper()
+        self.appid = os.environ['WEATHER_APP_ID']
         super(Snow, self).__init__()
 
     def ask(self, req, data):
@@ -13,7 +15,7 @@ class Snow(object):
         req is the endpoint verb
         data is a dictionary of query key,value pairs.
         """
-        payload = {'APPID' : 'xx',
+        payload = {'APPID': self.appid,
                    'units': 'imperial',
                    # 'lang': 'zh'
                    }

@@ -224,7 +224,8 @@ def scroll_test():
 
 
 if __name__ == '__main__':
-    scroll_test()
+    show_weather()
+    # scroll_test()
     # msg_picker()
     # back_picker()
     # go()
