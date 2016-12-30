@@ -44,6 +44,11 @@ class MyLCD(LCD.Adafruit_CharLCDPlate):
             return True
         return False
 
+    def get_my_ip(self):
+        from subprocess import check_output
+        self.ip = check_output(['hostname', '--all-ip-addresses'])
+        return self.ip
+
 
 class Mood(object):
     """
@@ -52,9 +57,9 @@ class Mood(object):
     def __init__(self):
         self.m = 0
         self.msgs = [
-            ('Happy!  ', MyLCD.BK_BLUE),
-            ('Hmmm!   ', MyLCD.BK_YELLOW),
-            ('Arrgghhh', MyLCD.BK_RED),
+            ('Happy Day!', MyLCD.BK_BLUE),
+            ('So So feeling today...', MyLCD.BK_YELLOW),
+            ('Arrgghhh !!', MyLCD.BK_RED),
         ]
         self.update()
 
@@ -75,6 +80,9 @@ class Mood(object):
             self.m = len(self.msgs) - 1
             # if no wrap around, self.m = 0
         self.update()
+
+    def add_message(self, message, color=MyLCD.BK_WHITE):
+        self.msgs.append((message, color))
 
 
 class App(object):
@@ -115,7 +123,10 @@ class App(object):
     def go(self):
         self.lcd.clear()
         self.update_weather()
-        self.update_mood()
+        # self.update_mood()
+        print self.lcd.get_my_ip()
+        self.mood_scroller.set_text(self.lcd.ip)
+        self.mood.add_message(self.lcd.ip)
 
         prev_tick = 0
         while True:
