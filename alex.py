@@ -4,228 +4,145 @@ import time
 
 import Adafruit_CharLCD as LCD
 from snow import Snow
+from scroller import Scroller
 
 
 class MyLCD(LCD.Adafruit_CharLCDPlate):
-
+    """
+        More features adding to the Adafruit LCD Plate class.
+    """
     BK_BLUE = 1
     BK_GREEN = 2
     BK_RED = 4
+    BK_YELLOW = 6
+    BK_CYAN = 3
+    BK_MAGENTA = 5
+    BK_WHITE = 7
 
     def __init__(self):
+        # for debouncing buttons
+        self._buttons = [0, 0, 0, 0, 0]
         super(MyLCD, self).__init__()
 
     def set_rgb(self, v):
-        # v is 0-7, RGB bits
+        """
+            Set background using color constants above.
+            v is 0-7, RGB bits
+        """
         r = (v & 4) >> 2
         g = (v & 2) >> 1
         b = v % 2
         self.set_color(r, g, b)
 
-
-# Initialize the LCD using the pins
-# lcd = LCD.Adafruit_CharLCDPlate()
-lcd = MyLCD()
-
-# create some custom characters
-lcd.create_char(1, [2, 3, 2, 2, 14, 30, 12, 0])
-lcd.create_char(2, [0, 1, 3, 22, 28, 8, 0, 0])
-lcd.create_char(3, [0, 14, 21, 23, 17, 14, 0, 0])
-lcd.create_char(4, [31, 17, 10, 4, 10, 17, 31, 0])
-lcd.create_char(5, [8, 12, 10, 9, 10, 12, 8, 0])
-lcd.create_char(6, [2, 6, 10, 18, 10, 6, 2, 0])
-lcd.create_char(7, [31, 17, 21, 21, 21, 21, 17, 31])
-
-def demo1():
-    # Show some basic colors.
-    lcd.set_color(1.0, 0.0, 0.0)
-    lcd.clear()
-    lcd.message('RED \x01')
-    time.sleep(3.0)
-
-    lcd.set_color(0.0, 1.0, 0.0)
-    lcd.clear()
-    lcd.message('GREEN \x02')
-    time.sleep(3.0)
-
-    lcd.set_color(0.0, 0.0, 1.0)
-    lcd.clear()
-    lcd.message('BLUE \x03')
-    time.sleep(3.0)
-
-    lcd.set_color(1.0, 1.0, 0.0)
-    lcd.clear()
-    lcd.message('YELLOW \x04')
-    time.sleep(3.0)
-
-    lcd.set_color(0.0, 1.0, 1.0)
-    lcd.clear()
-    lcd.message('CYAN \x05')
-    time.sleep(3.0)
-
-    lcd.set_color(1.0, 0.0, 1.0)
-    lcd.clear()
-    lcd.message('MAGENTA \x06')
-    time.sleep(3.0)
-
-    lcd.set_color(1.0, 1.0, 1.0)
-    lcd.clear()
-    lcd.message('WHITE \x07')
-    time.sleep(3.0)
-
-def demo2():
-    lcd.set_color(1.0, 0.0, 0.0)
-    lcd.clear()
-    lcd.message('RED')
-    time.sleep(3.0)
-
-    lcd.set_color(0.0, 1.0, 0.0)
-    lcd.clear()
-    lcd.message('GREEN')
-    time.sleep(3.0)
-
-    lcd.set_color(0.0, 0.0, 1.0)
-    lcd.clear()
-    lcd.message('BLUE')
-    time.sleep(3.0)
-
-    lcd.set_color(1.0, 1.0, 0.0)
-    lcd.clear()
-    lcd.message('YELLOW')
-    time.sleep(3.0)
-
-    lcd.set_color(0.0, 1.0, 1.0)
-    lcd.clear()
-    lcd.message('CYAN')
-    time.sleep(3.0)
-
-    lcd.set_color(1.0, 0.0, 1.0)
-    lcd.clear()
-    lcd.message('MAGENTA')
-    time.sleep(3.0)
-
-    lcd.set_color(1.0, 1.0, 1.0)
-    lcd.clear()
-    lcd.message('WHITE')
-    time.sleep(3.0)
-
-def demo_buttons():
-    # Show button state.
-    lcd.clear()
-    lcd.message('Press buttons...')
-
-    # Make list of button value, text, and backlight color.
-    buttons = ( (LCD.SELECT, 'Select', (1,1,1)),
-                (LCD.LEFT,   'Left'  , (1,0,0)),
-                (LCD.UP,     'Up'    , (0,0,1)),
-                (LCD.DOWN,   'Down'  , (0,1,0)),
-                (LCD.RIGHT,  'Right' , (1,0,1)) )
-
-    print('Press Ctrl-C to quit.')
-    while True:
-        # Loop through each button and check if it is pressed.
-        for button in buttons:
-            if lcd.is_pressed(button[0]):
-                # Button is pressed, change the message and backlight.
-                lcd.clear()
-                lcd.message(button[1])
-                lcd.set_color(button[2][0], button[2][1], button[2][2])
+    def button_pressed(self, b):
+        v = self.is_pressed(b)
+        if self._buttons[b] and not v:
+            self._buttons[b] = False
+            return False
+        if not self._buttons[b] and v:
+            self._buttons[b] = True
+            return True
+        return False
 
 
+class Mood(object):
+    """
+    A how-i-am-feeling display
+    """
+    def __init__(self):
+        self.m = 0
+        self.msgs = [
+            ('Happy!  ', MyLCD.BK_BLUE),
+            ('Hmmm!   ', MyLCD.BK_YELLOW),
+            ('Arrgghhh', MyLCD.BK_RED),
+        ]
+        self.update()
 
-def back_picker():
-    # use buttons (up/down) to select background RGB, 1 of 8
-    lcd.clear()
-    lcd.message('up/down')
-    v = 0  # 0-7 for RGB
-    while True:
-        if lcd.is_pressed(LCD.SELECT):
-            lcd.enable_display(False)
-            return
+    def update(self):
+        self.color = self.msgs[self.m][1]
+        self.text = self.msgs[self.m][0]
 
-        if lcd.is_pressed(LCD.DOWN):
-            v = max(v-1, 0)
-            lcd.set_rgb(v)
-            while lcd.is_pressed(LCD.DOWN):
-                time.sleep(0.1)
+    def next(self):
+        self.m = self.m + 1
+        if self.m >= len(self.msgs):
+            self.m = 0
+            # if no wrap around, self.m = len(self.msgs) - 1
+        self.update()
 
-        if lcd.is_pressed(LCD.UP):
-            v = min(v+1, 7)
-            lcd.set_rgb(v)
-            while lcd.is_pressed(LCD.UP):
-                time.sleep(0.1)
-        print v
-        show_time()
-
-def msg_picker():
-    # use buttons (up/down) to select messages
-    lcd.clear()
-    m = 0
-    msgs =  [
-        ('Happy!  ', lcd.BK_BLUE),
-        ('Hmmm!   ', lcd.BK_GREEN),
-        ('Arrgghhh', lcd.BK_RED),
-    ]
-    while True:
-        if lcd.is_pressed(LCD.SELECT):
-            lcd.enable_display(False)
-            return
-
-        if lcd.is_pressed(LCD.DOWN):
-            m = min(m+1, len(msgs)-1)
-            lcd.set_cursor(0, 0)
-            lcd.set_rgb(msgs[m][1])
-            lcd.message(msgs[m][0])
-            while lcd.is_pressed(LCD.DOWN):
-                time.sleep(0.1)
-
-        if lcd.is_pressed(LCD.UP):
-            m = max(m-1, 0)
-            lcd.set_cursor(0, 0)
-            lcd.set_rgb(msgs[m][1])
-            lcd.message(msgs[m][0])
-            while lcd.is_pressed(LCD.UP):
-                time.sleep(0.1)
-        show_time()
-        show_weather()
-
-def show_weather():
-    s = Snow()
-    s.weather()
-    lcd.set_cursor(0, 0)
-    lcd.message(str(s.temp) + "F")
-
-def show_time():
-    lcd.set_cursor(8, 1)
-    lcd.message(time.strftime('%H:%M:%S'))
-
-def go():
-    lcd.clear()
-    lcd.message('End of year Vaca\nFun project!')
-    return
-    # set cursor is col, row, zero based
-    lcd.set_cursor(1, 0)
-    lcd.write8(ord('Y'), True)
-
-    return
-    for c in range(16):
-        lcd.write8(ord('X'), True)
-        time.sleep(0.5)
-        lcd.move_right()
+    def prev(self):
+        self.m = self.m - 1
+        if self.m < 0:
+            self.m = len(self.msgs) - 1
+            # if no wrap around, self.m = 0
+        self.update()
 
 
-def scroll_test():
-    lcd.clear()
-    lcd.autoscroll(True)
-    lcd.set_cursor(15, 0)
-    lcd.message('0123456789abcdefghi')
-    return
-    lcd.message('a very long message that requires scrolling maybe')
+class App(object):
 
+    def __init__(self):
+        self.lcd = MyLCD()
+
+        self.snow = Snow()
+        self.weather_scroller = Scroller()
+        self.weather_scroller.set_region(0, 1, 10)
+
+        self.mood = Mood()
+        self.mood_scroller = Scroller()
+        self.mood_scroller.set_region(0, 0, 10)
+
+    def show_weather(self):
+        self.weather_scroller.scroll(self.lcd)
+
+    def show_time(self):
+        self.lcd.set_cursor(11, 1)
+        t = time.localtime()
+        c = ':' if t.tm_sec % 2 == 0 else ' '
+        self.lcd.message('%02d%c%02d' % (t.tm_hour, c, t.tm_min))
+
+    def show_mood(self):
+        self.mood_scroller.scroll(self.lcd)
+
+    def update_mood(self):
+        self.mood_scroller.set_text(self.mood.text)
+        self.lcd.set_rgb(self.mood.color)
+
+    def update_weather(self):
+        self.snow.weather()
+        self.weather_scroller.set_text('%s %dF %s %d%%' % \
+            (self.snow.location, self.snow.temp, self.snow.description,
+             self.snow.humidity))
+
+    def go(self):
+        self.lcd.clear()
+        self.update_weather()
+        self.update_mood()
+
+        prev_tick = 0
+        while True:
+            # tick in milli seconds
+            tick = int(round(time.time() * 1000))
+            if (tick - prev_tick) > 400:
+                self.show_weather()
+                self.show_time()
+                self.show_mood()
+                prev_tick = tick
+
+            # if self.lcd.is_pressed(LCD.SELECT):
+            if self.lcd.button_pressed(LCD.SELECT):
+                self.lcd.set_rgb(MyLCD.BK_WHITE)
+                self.lcd.enable_display(False)
+                break
+
+            # if self.lcd.is_pressed(LCD.DOWN):
+            if self.lcd.button_pressed(LCD.DOWN):
+                self.mood.next()
+                self.update_mood()
+
+            # if self.lcd.is_pressed(LCD.UP):
+            if self.lcd.button_pressed(LCD.UP):
+                self.mood.prev()
+                self.update_mood()
 
 if __name__ == '__main__':
-    show_weather()
-    # scroll_test()
-    # msg_picker()
-    # back_picker()
-    # go()
+    app = App()
+    app.go()

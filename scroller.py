@@ -18,10 +18,8 @@ class Scroller(object):
         self.text = ' ' * self.width + text + ' ' * self.width
         self.cp = 0
         self.end_cp = len(self.text) - self.width
-        print '>%s<' % self.text
-        print self.end_cp
 
-    def scroll(self):
+    def scroll(self, lcd=None):
         """
         Scroll one char. return updated display text.
         Also avail in display_text
@@ -30,7 +28,11 @@ class Scroller(object):
             self.cp = 0
         else:
             self.cp = self.cp + 1
-        return self.text[self.cp:self.cp+self.width]
+        t = self.text[self.cp:self.cp+self.width]
+        if lcd is not None:
+            lcd.set_cursor(self.col, self.row)
+            lcd.message(t)
+        return t
 
 
 if __name__ == '__main__':
