@@ -5,6 +5,7 @@ import time
 import Adafruit_CharLCD as LCD
 from snow import Snow
 from scroller import Scroller
+import schedule as sched
 
 
 class MyLCD(LCD.Adafruit_CharLCDPlate):
@@ -121,6 +122,8 @@ class App(object):
              self.snow.humidity))
 
     def go(self):
+        sched.every(5).minutes.do(self.update_weather)
+
         self.lcd.clear()
         self.update_weather()
         # self.update_mood()
@@ -137,6 +140,7 @@ class App(object):
                 self.show_time()
                 self.show_mood()
                 prev_tick = tick
+                sched.run_pending()
 
             # if self.lcd.is_pressed(LCD.SELECT):
             if self.lcd.button_pressed(LCD.SELECT):
