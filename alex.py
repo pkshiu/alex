@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# Example using a character LCD plate.
+import sys
 import time
 
 import Adafruit_CharLCD as LCD
@@ -159,5 +159,9 @@ class App(object):
                 self.update_mood()
 
 if __name__ == '__main__':
+    # optional delay so that this can be run in rc.local
+    if len(sys.argv) == 2 and sys.argv[1] == 'delay':
+        time.sleep(30)
+
     app = App()
     app.go()
