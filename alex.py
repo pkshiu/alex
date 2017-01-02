@@ -3,52 +3,10 @@ import sys
 import time
 
 import Adafruit_CharLCD as LCD
+from lcd_plus import LCDPlus
 from snow import Snow
 from scroller import Scroller
 import schedule as sched
-
-
-class MyLCD(LCD.Adafruit_CharLCDPlate):
-    """
-        More features adding to the Adafruit LCD Plate class.
-    """
-    BK_BLUE = 1
-    BK_GREEN = 2
-    BK_RED = 4
-    BK_YELLOW = 6
-    BK_CYAN = 3
-    BK_MAGENTA = 5
-    BK_WHITE = 7
-
-    def __init__(self):
-        # for debouncing buttons
-        self._buttons = [0, 0, 0, 0, 0]
-        super(MyLCD, self).__init__()
-
-    def set_rgb(self, v):
-        """
-            Set background using color constants above.
-            v is 0-7, RGB bits
-        """
-        r = (v & 4) >> 2
-        g = (v & 2) >> 1
-        b = v % 2
-        self.set_color(r, g, b)
-
-    def button_pressed(self, b):
-        v = self.is_pressed(b)
-        if self._buttons[b] and not v:
-            self._buttons[b] = False
-            return False
-        if not self._buttons[b] and v:
-            self._buttons[b] = True
-            return True
-        return False
-
-    def get_my_ip(self):
-        from subprocess import check_output
-        self.ip = check_output(['hostname', '--all-ip-addresses'])
-        return self.ip
 
 
 class Mood(object):
@@ -58,9 +16,9 @@ class Mood(object):
     def __init__(self):
         self.m = 0
         self.msgs = [
-            ('Happy Day!', MyLCD.BK_BLUE),
-            ('So So feeling today...', MyLCD.BK_YELLOW),
-            ('Arrgghhh !!', MyLCD.BK_RED),
+            ('Happy Day!', LCDPlus.BK_BLUE),
+            ('So So feeling today...', LCDPlus.BK_YELLOW),
+            ('Arrgghhh !!', LCDPlus.BK_RED),
         ]
         self.update()
 
@@ -82,14 +40,14 @@ class Mood(object):
             # if no wrap around, self.m = 0
         self.update()
 
-    def add_message(self, message, color=MyLCD.BK_WHITE):
+    def add_message(self, message, color=LCDPlus.BK_WHITE):
         self.msgs.append((message, color))
 
 
 class App(object):
 
     def __init__(self):
-        self.lcd = MyLCD()
+        self.lcd = LCDPlus()
 
         self.snow = Snow()
         self.weather_scroller = Scroller()
@@ -144,7 +102,7 @@ class App(object):
 
             # if self.lcd.is_pressed(LCD.SELECT):
             if self.lcd.button_pressed(LCD.SELECT):
-                self.lcd.set_rgb(MyLCD.BK_WHITE)
+                self.lcd.set_rgb(LCDPlus.BK_WHITE)
                 self.lcd.enable_display(False)
                 break
 
